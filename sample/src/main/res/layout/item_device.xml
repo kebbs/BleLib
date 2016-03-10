@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="72dp"
+    android:paddingBottom="4dp"
+    android:paddingLeft="8dp"
+    android:paddingRight="8dp"
+    android:paddingTop="4dp">
+
+    <ImageView
+        android:id="@+id/imgv_logo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:src="@mipmap/ic_bluetooth_black_36dp" />
+
+    <TextView
+        android:id="@+id/txtv_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="8dp"
+        android:layout_toRightOf="@id/imgv_logo"
+        android:text="心电图机\n"
+        android:textSize="18sp" />
+
+    <TextView
+        android:id="@+id/txtv_address"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/txtv_name"
+        android:layout_below="@id/txtv_name"
+        android:gravity="center"
+        android:text="状态: 未连接"
+        android:textSize="14sp" />
+
+    <TextView
+        android:id="@+id/txtv_connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/txtv_name"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@id/txtv_name"
+        android:gravity="center"
+        android:text="状态: 未连接"
+        android:textSize="14sp" />
+
+    <Button
+        android:id="@+id/btn_connect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:focusable="false"
+        android:text="连接"
+        android:textSize="18sp"
+        android:visibility="visible" />
+
+</RelativeLayout>
