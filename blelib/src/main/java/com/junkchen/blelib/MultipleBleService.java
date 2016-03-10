@@ -98,7 +98,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Check for your device to support Ble
      *
-     * @return true->support    false->not support
+     * @return true is support    false is not support
      */
     public boolean isSupportBle() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
@@ -130,8 +130,8 @@ public class MultipleBleService extends Service implements Constants {
      * Turn on or off the local Bluetooth adapter;do not use without explicit
      * user action to turn on Bluetooth.
      *
-     * @param enable
-     * @return
+     * @param enable if open ble
+     * @return if ble is open return true
      */
     public boolean enableBluetooth(boolean enable) {
         if (enable) {
@@ -151,7 +151,7 @@ public class MultipleBleService extends Service implements Constants {
      * Scan Ble device.
      *
      * @param enable     If true, start scan ble device.False stop scan.
-     * @param scanPeriod
+     * @param scanPeriod scan ble period time
      */
     public void scanLeDevice(final boolean enable, long scanPeriod) {
         if (enable) {
@@ -195,7 +195,8 @@ public class MultipleBleService extends Service implements Constants {
 
     /**
      * If Ble is scaning return true, if not return false.
-     * @return
+     *
+     * @return ble whether scanning
      */
     public boolean isScanning() {
         return isScanning;
@@ -204,7 +205,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Get scan ble devices
      *
-     * @return
+     * @return scan le device list
      */
     public List<BluetoothDevice> getScanLeDevice() {
         return mScanLeDeviceList;
@@ -263,6 +264,8 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Disconnects an existing connection or cancel a pending connection. The disconnection result
      * is reported asynchronously through the BluetoothGattCallback#onConnectionStateChange.
+     *
+     * @param address disconnect address
      */
     public void disconnect(final String address) {
         if (mBluetoothAdapter == null || mBluetoothGattMap.get(address) == null) {
@@ -303,6 +306,7 @@ public class MultipleBleService extends Service implements Constants {
      * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
      * asynchronously through the BluetoothGattCallback#onCharacteristicRead.
      *
+     * @param address        The address to read from.
      * @param characteristic The characteristic to read from.
      */
     public void readCharacteristic(String address, BluetoothGattCharacteristic characteristic) {
@@ -319,9 +323,9 @@ public class MultipleBleService extends Service implements Constants {
      * {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt,
      * android.bluetooth.BluetoothGattCharacteristic, int)} callback.
      *
-     * @param address
-     * @param serviceUUID
-     * @param characteristicUUID
+     * @param address            The address to read from.
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
      */
     public void readCharacteristic(String address, String serviceUUID, String characteristicUUID) {
         if (mBluetoothGattMap.get(address) != null) {
@@ -336,10 +340,11 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Write data to characteristic, and send to remote bluetooth le device.
      *
-     * @param address
-     * @param serviceUUID
-     * @param characteristicUUID
+     * @param address            The address to read from.
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
      * @param value              Send to remote ble device data.
+     * @return if write success return true
      */
     public boolean writeCharacteristic(String address, String serviceUUID,
                                        String characteristicUUID, String value) {
@@ -358,10 +363,11 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Write data to characteristic, and send to remote bluetooth le device.
      *
-     * @param address
-     * @param serviceUUID
-     * @param characteristicUUID
+     * @param address            The address to read from.
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
      * @param value              Send to remote ble device data.
+     * @return if write success return true
      */
     public boolean writeCharacteristic(String address, String serviceUUID,
                                        String characteristicUUID, byte[] value) {
@@ -380,6 +386,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Enables or disables notification on a give characteristic.
      *
+     * @param address        The address.
      * @param characteristic Characteristic to act on.
      * @param enabled        If true, enable notification.  False otherwise.
      */
@@ -402,10 +409,10 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Enables or disables notification on a give characteristic.
      *
-     * @param address
-     * @param serviceUUID
-     * @param characteristicUUID
-     * @param enabled
+     * @param address            The address to read from.
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
+     * @param enabled            if notify is true
      */
     public void setCharacteristicNotification(String address, String serviceUUID,
                                               String characteristicUUID, boolean enabled) {
@@ -442,6 +449,7 @@ public class MultipleBleService extends Service implements Constants {
      * Retrieves a list of supported GATT services on the connected device. This should be
      * invoked only after {@code BluetoothGatt#discoverServices()} completes successfully.
      *
+     * @param address address
      * @return A {@code List} of supported services.
      */
     public List<BluetoothGattService> getSupportedGattServices(String address) {

@@ -1,5 +1,35 @@
 apply plugin: 'com.android.library'
 
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
+
+    defaultConfig {
+        minSdkVersion 18
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    lintOptions {
+        abortOnError false
+//        disable 'MissingTranslation'
+//        ignoreWarnings true
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.1.1'
+}
+
 //1.add plugin添加插件
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
@@ -8,8 +38,8 @@ apply plugin: 'com.jfrog.bintray'
 version = "1.0.0"
 
 //3.定义相关网站
-def siteUrl = ''
-def gitUrl = ''
+def siteUrl = 'https://github.com/junkchen/BleLib'
+def gitUrl = 'https://github.com/junkchen/BleLib.git'
 
 //4.定义Group
 group = "com.junkchen"
@@ -17,28 +47,34 @@ group = "com.junkchen"
 //5.定义pom并打包aar
 install {
     repositories.mavenInstaller {
-        pom {
-            project {
-                name 'BleLib'
-                packaging 'aar'
-                url siteUrl
-                licenses {
-                    license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'https://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
+        pom.project {
+            name 'BleLib'
+            description 'BleLib是Android低功耗蓝牙4.0及以上开发的辅助库，一行代码解决Ble初始化、扫描、连接等操作。'
+            url siteUrl
+            inceptionYear '2015'
+
+            packaging 'aar'
+            groupId 'com.junkchen'
+            artifactId 'blelib'
+            version '1.0.0'
+
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
                 }
-                developers {
-                    developer {
-                        id 'junkchen'
-                        name 'Junk Chen'
-                        email 'junkchen@vip.qq.com'
-                    }
-                }
-                scm {
-                    connection gitUrl
-                    developerConnection gitUrl
-                    url gitUrl
+            }
+            scm {
+                connection gitUrl
+                developerConnection gitUrl
+                url gitUrl
+            }
+            developers {
+                developer {
+                    id 'junkchen'
+                    name 'Junk Chen'
+                    email 'junkchen@vip.qq.com'
                 }
             }
         }
@@ -57,7 +93,6 @@ task javadoc(type: Javadoc) {
 task javadocJar(type: Jar, dependsOn: javadoc) {
     classifier = 'javadoc'
     from javadoc.destinationDir
-    options.encoding = 'UTF-8'
 }
 artifacts {
     archives javadocJar
@@ -72,35 +107,21 @@ bintray {
     key = properties.getProperty("bintray.apikey")
     configurations = ['archives']
     pkg {
-        repo 'maven'
-        name = "blelib" // project name in jcenter
+        repo = "maven"
+        name = "blelib"               // project name in jcenter
         websiteUrl = siteUrl
+        issueTrackerUrl = 'https://github.com/junkchen/BleLib/issues'
         vcsUrl = gitUrl
         licenses = ["Apache-2.0"]
         publish = true
-    }
-}
-
-android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
-
-    defaultConfig {
-        minSdkVersion 18
-        targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        version {
+            name = '1.0.0'
+            desc = 'BleLib first version.'
+//            released  = new Date()
+//            gpg {
+//                sign = true
+//                passphrase = properties.getProperty("bintray.gpg.password")
+//            }
         }
     }
-}
-
-dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:23.1.1'
 }

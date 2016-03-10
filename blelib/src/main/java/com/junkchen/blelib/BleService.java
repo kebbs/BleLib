@@ -97,7 +97,7 @@ public class BleService extends Service implements Constants {
     /**
      * Check for your device to support Ble
      *
-     * @return true->support    false->not support
+     * @return true is support    false is not support
      */
     public boolean isSupportBle() {
         return getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
@@ -129,8 +129,8 @@ public class BleService extends Service implements Constants {
      * Turn on or off the local Bluetooth adapter;do not use without explicit
      * user action to turn on Bluetooth.
      *
-     * @param enable
-     * @return
+     * @param enable if open ble
+     * @return if ble is open return true
      */
     public boolean enableBluetooth(boolean enable) {
         if (enable) {
@@ -159,7 +159,7 @@ public class BleService extends Service implements Constants {
      * Scan Ble device.
      *
      * @param enable If true, start scan ble device.False stop scan.
-     * @param scanPeriod
+     * @param scanPeriod scan ble period time
      */
     public void scanLeDevice(final boolean enable, long scanPeriod) {
         if (enable) {
@@ -203,7 +203,7 @@ public class BleService extends Service implements Constants {
 
     /**
      * If Ble is scaning return true, if not return false.
-     * @return
+     * @return ble whether scanning
      */
     public boolean isScanning() {
         return isScanning;
@@ -211,8 +211,7 @@ public class BleService extends Service implements Constants {
 
     /**
      * Get scan ble devices
-     *
-     * @return
+     *@return scan le device list
      */
     public List<BluetoothDevice> getScanLeDevice() {
         return mScanLeDeviceList;
@@ -300,8 +299,8 @@ public class BleService extends Service implements Constants {
      * {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt,
      * android.bluetooth.BluetoothGattCharacteristic, int)} callback.
      *
-     * @param serviceUUID
-     * @param characteristicUUID
+     * @param serviceUUID remote device service uuid
+     * @param characteristicUUID  remote device characteristic uuid
      */
     public void readCharacteristic(String serviceUUID, String characteristicUUID) {
         if (mBluetoothGatt != null) {
@@ -326,8 +325,8 @@ public class BleService extends Service implements Constants {
     /**
      * Write data to characteristic, and send to remote bluetooth le device.
      *
-     * @param serviceUUID
-     * @param characteristicUUID
+     * @param serviceUUID remote device service uuid
+     * @param characteristicUUID  remote device characteristic uuid
      * @param value              Send to remote ble device data.
      */
     public void writeCharacteristic(String serviceUUID, String characteristicUUID, String value) {
@@ -356,8 +355,9 @@ public class BleService extends Service implements Constants {
     /**
      * Write value to characteristic, and send to remote bluetooth le device.
      *
-     * @param characteristic
+     * @param characteristic  remote device characteristic
      * @param value          New value for this characteristic
+     *                       @return if write success return true
      */
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, String value) {
         return writeCharacteristic(characteristic, value.getBytes());
@@ -366,8 +366,9 @@ public class BleService extends Service implements Constants {
     /**
      * Writes a given characteristic and its values to the associated remote device.
      *
-     * @param characteristic
+     * @param characteristic remote device characteristic
      * @param value          New value for this characteristic
+     *                       @return if write success return true
      */
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
         if (mBluetoothGatt != null) {
