@@ -38,6 +38,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.junkchen.blelib.BleService;
+import com.junkchen.blelib.MultipleBleService;
 import com.junkchen.blelib.sample.adapter.CommonAdapter;
 import com.junkchen.blelib.sample.adapter.ViewHolder;
 
@@ -46,16 +47,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BleScanActivity extends AppCompatActivity {
+public class MultipleBleActivity extends AppCompatActivity {
     //Debugging
-    private static final String TAG = BleScanActivity.class.getSimpleName();
+    private static final String TAG = MultipleBleActivity.class.getSimpleName();
 
     //Constant
     public static final int SERVICE_BIND = 1;
+    public static final int CONNECT_CHANGE = 2;
 
     //Member fields
     private boolean mIsBind;
-    private BleService mBleService;
+    private MultipleBleService mBleService;
     private CommonAdapter<Map<String, Object>> deviceAdapter;
     private List<Map<String, Object>> deviceList;
     private String connDeviceName;
@@ -69,16 +71,16 @@ public class BleScanActivity extends AppCompatActivity {
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mBleService = ((BleService.LocalBinder) service).getService();
+            mBleService = ((MultipleBleService.LocalBinder) service).getService();
             if (mBleService != null) mHandler.sendEmptyMessage(SERVICE_BIND);
             if (mBleService.initialize()) {
                 if (mBleService.enableBluetooth(true)) {
                     showDialog(getResources().getString(R.string.scanning));
                     mBleService.scanLeDevice(true);
-                    Toast.makeText(BleScanActivity.this, "Bluetooth was opened", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MultipleBleActivity.this, "Bluetooth was opened", Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(BleScanActivity.this, "not support Bluetooth", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MultipleBleActivity.this, "not support Bluetooth", Toast.LENGTH_SHORT).show();
             }
         }
 
@@ -95,6 +97,9 @@ public class BleScanActivity extends AppCompatActivity {
             switch (msg.what) {
                 case SERVICE_BIND:
                     setBleServiceListener();
+                    break;
+                case CONNECT_CHANGE:
+                    txtv_connNum.setText(mBleService.getConnectDevices().size());
                     break;
             }
         }
@@ -132,6 +137,8 @@ public class BleScanActivity extends AppCompatActivity {
         txtv_connNum = (TextView) findViewById(R.id.txtv_connNum);
         lstv_devList = (ListView) findViewById(R.id.lstv_devList);
 
+        txtv_connNum.setVisibility(View.VISIBLE);
+
         btn_scanBle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -160,7 +167,7 @@ public class BleScanActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         if ((boolean) deviceMap.get("isConnect")) {
-                            mBleService.disconnect();
+                            mBleService.disconnect(deviceMap.get("address").toString());
                             showDialog(getString(R.string.disconnecting));
                         } else {
                             connDeviceAddress = (String) deviceMap.get("address");
@@ -169,9 +176,6 @@ public class BleScanActivity extends AppCompatActivity {
                             connDevMap.put("name", connDeviceName);
                             connDevMap.put("address", connDeviceAddress);
                             connDevMap.put("isConnect", false);
-                            deviceList.clear();
-                            deviceList.add(connDevMap);
-                            deviceAdapter.notifyDataSetChanged();
                             mBleService.connect(connDeviceAddress);
                             showDialog(getString(R.string.connecting));
                         }
@@ -183,7 +187,7 @@ public class BleScanActivity extends AppCompatActivity {
     }
 
     private void setBleServiceListener() {
-        mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
+        mBleService.setOnDataAvailableListener(new MultipleBleService.OnDataAvailableListener() {
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
 
@@ -197,7 +201,7 @@ public class BleScanActivity extends AppCompatActivity {
     }
 
     private void doBindService() {
-        Intent serviceIntent = new Intent(this, BleService.class);
+        Intent serviceIntent = new Intent(this, MultipleBleService.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
@@ -225,10 +229,12 @@ public class BleScanActivity extends AppCompatActivity {
             } else if (intent.getAction().equals(BleService.ACTION_GATT_CONNECTED)) {
                 deviceList.get(0).put("isConnect", true);
                 deviceAdapter.notifyDataSetChanged();
+                mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {
                 deviceList.get(0).put("isConnect", false);
                 deviceAdapter.notifyDataSetChanged();
+                mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_SCAN_FINISHED)) {
                 btn_scanBle.setEnabled(true);

@@ -225,6 +225,7 @@ public class BleService extends Service implements Constants {
      * is reported asynchronously through the BluetoothGattCallback#onConnectionStateChange.
      */
     public boolean connect(final String address) {
+        if (isScanning) scanLeDevice(false);
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;

@@ -1,5 +1,30 @@
 apply plugin: 'com.android.library'
 
+ext {
+    libraryVersion = '1.0.3'
+
+    bintrayRepo = 'maven'
+    bintrayName = 'blelib'
+
+    publishedGroupId = 'com.junkchen.blelib'
+    libraryName = 'blelib'
+    artifactId = 'blelib'
+
+    libraryDescription = 'BleLib是Android低功耗蓝牙4.0及以上开发的辅助库，一行代码解决Ble初始化、扫描、连接等操作。'
+
+    siteUrl = 'https://github.com/junkchen/BleLib'
+    issueUrl = 'https://github.com/junkchen/BleLib/issues'
+    gitUrl = 'https://github.com/junkchen/BleLib.git'
+
+    developerId = 'junkchen'
+    developerName = 'Junk Chen'
+    developerEmail = 'junkchen@vip.qq.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.2"
@@ -8,7 +33,7 @@ android {
         minSdkVersion 18
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.0.3"
     }
     buildTypes {
         release {
@@ -30,98 +55,6 @@ dependencies {
     compile 'com.android.support:appcompat-v7:23.1.1'
 }
 
-//1.add plugin添加插件
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
-
-//2.定义版本
-version = "1.0.2"
-
-//3.定义相关网站
-def siteUrl = 'https://github.com/junkchen/BleLib'
-def gitUrl = 'https://github.com/junkchen/BleLib.git'
-
-//4.定义Group
-group = "com.junkchen.blelib"
-
-//5.定义pom并打包aar
-install {
-    repositories.mavenInstaller {
-        pom.project {
-            name 'BleLib'
-            description 'BleLib是Android低功耗蓝牙4.0及以上开发的辅助库，一行代码解决Ble初始化、扫描、连接等操作。'
-            url siteUrl
-            inceptionYear '2015'
-
-            packaging 'aar'
-            groupId 'com.junkchen.blelib'
-            artifactId 'blelib'
-            version '1.0.2'
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-            scm {
-                connection gitUrl
-                developerConnection gitUrl
-                url gitUrl
-            }
-            developers {
-                developer {
-                    id 'junkchen'
-                    name 'Junk Chen'
-                    email 'junkchen@vip.qq.com'
-                }
-            }
-        }
-    }
-}
-
-//6.打包javadocjar和sourcejar
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-}
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
-
-//7.上传到Jcenter仓库
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
-    configurations = ['archives']
-    pkg {
-        repo = "maven"
-        name = "blelib"               // project name in jcenter
-        websiteUrl = siteUrl
-        issueTrackerUrl = 'https://github.com/junkchen/BleLib/issues'
-        vcsUrl = gitUrl
-        licenses = ["Apache-2.0"]
-        publish = true
-        version {
-            name = '1.0.2'
-            desc = 'Update group id.'
-//            released  = new Date()
-//            gpg {
-//                sign = true
-//                passphrase = properties.getProperty("bintray.gpg.password")
-//            }
-        }
-    }
-}
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'
+//

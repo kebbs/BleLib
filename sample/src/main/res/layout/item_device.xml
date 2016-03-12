@@ -22,7 +22,7 @@
         android:layout_alignParentTop="true"
         android:layout_marginLeft="8dp"
         android:layout_toRightOf="@id/imgv_logo"
-        android:text="心电图机\n"
+        android:text="Ble name"
         android:textSize="18sp" />
 
     <TextView
@@ -31,9 +31,8 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@id/txtv_name"
         android:layout_below="@id/txtv_name"
-        android:gravity="center"
-        android:text="状态: 未连接"
-        android:textSize="14sp" />
+        android:text="00:00:00:00:00:00"
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/txtv_connState"
@@ -41,8 +40,8 @@
         android:layout_height="wrap_content"
         android:layout_alignLeft="@id/txtv_name"
         android:layout_alignParentBottom="true"
-        android:layout_below="@id/txtv_name"
-        android:gravity="center"
+        android:layout_below="@id/txtv_address"
+        android:layout_marginTop="4dp"
         android:text="状态: 未连接"
         android:textSize="14sp" />
 

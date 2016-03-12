@@ -15,7 +15,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".BleScanActivity"></activity>
+        <activity android:name=".BleScanActivity" />
+        <activity android:name=".MultipleBleActivity"></activity>
     </application>
 
 </manifest>

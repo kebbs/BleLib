@@ -5,4 +5,6 @@
     <string name="connected">连接</string>
     <string name="disconnected">断开</string>
     <string name="scanning">扫描中...</string>
+    <string name="connecting">连接中...</string>
+    <string name="disconnecting">正在断开...</string>
 </resources>
