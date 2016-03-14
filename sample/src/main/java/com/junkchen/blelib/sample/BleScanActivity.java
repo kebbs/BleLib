@@ -274,14 +274,15 @@ public class BleScanActivity extends AppCompatActivity {
 
     private void doOperation() {
 //        mBleService.initialize();//Ble初始化操作
-//        mBleService.enableBluetooth();//打开或关闭蓝牙
-//        mBleService.scanLeDevice();//启动或停止扫描Ble设备
-//        mBleService.connect();//连接Ble
+//        mBleService.enableBluetooth(boolean enable);//打开或关闭蓝牙
+//        mBleService.scanLeDevice(boolean enable, long scanPeriod);//启动或停止扫描Ble设备
+//        mBleService.connect(String address);//连接Ble
 //        mBleService.disconnect();//取消连接
 //        mBleService.getSupportedGattServices();//获取服务
-//        mBleService.setCharacteristicNotification();//设置通知
-//        mBleService.readCharacteristic();//读取数据
-//        mBleService.writeCharacteristic();//写入数据
+//        mBleService.setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+//        boolean enabled);//设置通知
+//        mBleService.readCharacteristic(BluetoothGattCharacteristic characteristic);//读取数据
+//        mBleService.writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value);//写入数据
     }
 
     private void doBindService() {
