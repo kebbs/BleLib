@@ -16,33 +16,19 @@
 
 package com.junkchen.blelib.sample;
 
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.view.View;
+import android.support.v7.app.AppCompatActivity;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
-public class MainActivity extends AppCompatActivity {
+public class CharacteristicActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-    }
-
-    public void doClick(View v) {
-        switch (v.getId()) {
-            case R.id.btn_singleBle:
-                startActivity(new Intent(this, BleScanActivity.class));
-                break;
-            case R.id.btn_multipleBle:
-                startActivity(new Intent(this, MultipleBleActivity.class));
-                break;
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        android.os.Process.killProcess(android.os.Process.myPid());
+        setContentView(R.layout.activity_characteristic);
+        String[] characteristics = getIntent().getStringArrayExtra("characteristic");
+        ((ListView) findViewById(R.id.lstv_showChar)).setAdapter(
+                new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, characteristics));
     }
 }

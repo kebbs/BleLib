@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 ext {
-    libraryVersion = '1.0.3'
+    libraryVersion = '1.0.4'
 
     bintrayRepo = 'maven'
     bintrayName = 'blelib'
@@ -37,7 +37,7 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
@@ -57,4 +57,4 @@ dependencies {
 
 apply from: 'install.gradle'
 apply from: 'bintray.gradle'
-//
+//https://oss.sonatype.org/content/repositories/releases/com/junkchen/blelib

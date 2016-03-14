@@ -23,8 +23,8 @@ import java.util.Map;
  * Created by JunkChen on 2015/9/11 0011.
  * This class includes a small subset of standard GATT attributes for demonstration(表露) purposes.
  */
-public class GattAttributes {
-    private static final Map<String, String> attributes = new HashMap<>();
+public abstract class GattAttributes {
+    public static final Map<String, String> attributes = new HashMap<>();
     //GATT Services
     public static final String SERVICE_GENERIC_ACCESS = "00001800-0000-1000-8000-00805F9B34FB";
     public static final String SERVICE_GENERIC_ATTRIBUTE = "00001801-0000-1000-8000-00805F9B34FB";
@@ -453,7 +453,6 @@ public class GattAttributes {
         attributes.put(CHARACTERISTIC_WEIGHT_MEASUREMENT, "Weight Measurement");
         attributes.put(CHARACTERISTIC_WEIGHT_SCALE_FEATURE, "Weight Scale Feature");
         attributes.put(CHARACTERISTIC_WIND_CHILL, "Wind Chill");
-        attributes.put(SERVICE_GENERIC_ACCESS, "");
 
         // Sample descriptors name.
         attributes.put(DESCRIPTOR_CHARACTERISTIC_EXTENDED_PROPERTIES, "Characteristic Extended Properties");

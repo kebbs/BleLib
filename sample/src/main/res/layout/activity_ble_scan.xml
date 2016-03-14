@@ -23,7 +23,8 @@
         android:id="@+id/txtv_connNum"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="设备连接数量："
+        android:text="@string/dev_conn_number"
+        android:layout_marginLeft="8dp"
         android:textSize="14sp"
         android:visibility="gone" />
 
@@ -31,4 +32,11 @@
         android:id="@+id/lstv_devList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"></ListView>
+
+    <ListView
+        android:id="@+id/lstv_showService"
+        android:layout_width="match_parent"
+        android:layout_marginTop="16dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"></ListView>
 </LinearLayout>

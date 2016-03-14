@@ -19,6 +19,7 @@ package com.junkchen.blelib.sample;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -99,7 +100,9 @@ public class MultipleBleActivity extends AppCompatActivity {
                     setBleServiceListener();
                     break;
                 case CONNECT_CHANGE:
-                    txtv_connNum.setText(mBleService.getConnectDevices().size());
+                    deviceAdapter.notifyDataSetChanged();
+                    txtv_connNum.setText(getString(R.string.dev_conn_number) +
+                            mBleService.getConnectDevices().size());
                     break;
             }
         }
@@ -120,7 +123,6 @@ public class MultipleBleActivity extends AppCompatActivity {
         super.onDestroy();
         doUnBindService();
         unregisterReceiver(bleReceiver);
-        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     @Override
@@ -143,6 +145,9 @@ public class MultipleBleActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!mBleService.isScanning()) {
+                    showDialog(getString(R.string.scanning));
+                    mBleService.close();
+                    deviceList.clear();
                     mBleService.scanLeDevice(true);
                 }
             }
@@ -187,6 +192,32 @@ public class MultipleBleActivity extends AppCompatActivity {
     }
 
     private void setBleServiceListener() {
+        mBleService.setOnConnectListener(new MultipleBleService.OnConnectListener() {
+            @Override
+            public void onConnect(BluetoothGatt gatt, int status, int newState) {
+                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                    for (int i = 0; i < deviceList.size(); i++) {
+                        HashMap<String, Object> devMap = (HashMap<String, Object>) deviceList.get(i);
+                        if (devMap.get("address").toString().equals(gatt.getDevice().getAddress())) {
+                            ((HashMap) deviceList.get(i)).put("isConnect", false);
+                            return;
+                        }
+                    }
+                } else if (newState == BluetoothProfile.STATE_CONNECTING) {
+
+                } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                    for (int i = 0; i < deviceList.size(); i++) {
+                        HashMap<String, Object> devMap = (HashMap<String, Object>) deviceList.get(i);
+                        if (devMap.get("address").toString().equals(gatt.getDevice().getAddress())) {
+                            ((HashMap) deviceList.get(i)).put("isConnect", true);
+                            return;
+                        }
+                    }
+                } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
+
+                }
+            }
+        });
         mBleService.setOnDataAvailableListener(new MultipleBleService.OnDataAvailableListener() {
             @Override
             public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
@@ -227,13 +258,9 @@ public class MultipleBleActivity extends AppCompatActivity {
                 deviceList.add(deviceMap);
                 deviceAdapter.notifyDataSetChanged();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_CONNECTED)) {
-                deviceList.get(0).put("isConnect", true);
-                deviceAdapter.notifyDataSetChanged();
                 mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {
-                deviceList.get(0).put("isConnect", false);
-                deviceAdapter.notifyDataSetChanged();
                 mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_SCAN_FINISHED)) {

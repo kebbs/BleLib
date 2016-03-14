@@ -19,6 +19,7 @@ package com.junkchen.blelib.sample;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattService;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -32,6 +33,8 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -52,19 +55,21 @@ public class BleScanActivity extends AppCompatActivity {
 
     //Constant
     public static final int SERVICE_BIND = 1;
+    public static final int SERVICE_SHOW = 2;
 
     //Member fields
     private boolean mIsBind;
     private BleService mBleService;
     private CommonAdapter<Map<String, Object>> deviceAdapter;
+    private ArrayAdapter<String> serviceAdapter;
     private List<Map<String, Object>> deviceList;
     private String connDeviceName;
     private String connDeviceAddress;
 
     //Layout view
     private Button btn_scanBle;
-    private TextView txtv_connNum;
     private ListView lstv_devList;
+    private ListView lstv_showService;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -96,6 +101,9 @@ public class BleScanActivity extends AppCompatActivity {
                 case SERVICE_BIND:
                     setBleServiceListener();
                     break;
+                case SERVICE_SHOW:
+                    serviceAdapter.notifyDataSetChanged();
+                    break;
             }
         }
     };
@@ -115,7 +123,6 @@ public class BleScanActivity extends AppCompatActivity {
         super.onDestroy();
         doUnBindService();
         unregisterReceiver(bleReceiver);
-        android.os.Process.killProcess(android.os.Process.myPid());
     }
 
     @Override
@@ -129,15 +136,31 @@ public class BleScanActivity extends AppCompatActivity {
 
     private void initView() {
         btn_scanBle = (Button) findViewById(R.id.btn_scanBle);
-        txtv_connNum = (TextView) findViewById(R.id.txtv_connNum);
         lstv_devList = (ListView) findViewById(R.id.lstv_devList);
-
+        lstv_showService = (ListView) findViewById(R.id.lstv_showService);
+        TextView txtv = new TextView(this);
+        txtv.setText("Services");
+        lstv_showService.addHeaderView(txtv);
+        lstv_showService.setVisibility(View.VISIBLE);
         btn_scanBle.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!mBleService.isScanning()) {
+                    showDialog(getString(R.string.scanning));
+                    mBleService.close();
+                    deviceList.clear();
                     mBleService.scanLeDevice(true);
                 }
+            }
+        });
+        lstv_showService.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Log.i(TAG, "position = " + position + ", id = " + id);
+                String s = serviceList.get((int) id);
+                Intent intent = new Intent(BleScanActivity.this, CharacteristicActivity.class);
+                intent.putExtra("characteristic", characteristicList.get((int) id));
+                startActivity(intent);
             }
         });
     }
@@ -180,20 +203,85 @@ public class BleScanActivity extends AppCompatActivity {
             }
         };
         lstv_devList.setAdapter(deviceAdapter);
+        serviceList = new ArrayList<>();
+        serviceAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, serviceList);
+        lstv_showService.setAdapter(serviceAdapter);
     }
 
+    private List<BluetoothGattService> gattServiceList;
+    private List<String> serviceList;
+    private List<String[]> characteristicList;
     private void setBleServiceListener() {
-        mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
+        mBleService.setOnServicesDiscoveredListener(new BleService.OnServicesDiscoveredListener() {
             @Override
-            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                    gattServiceList = gatt.getServices();
+                    characteristicList = new ArrayList<>();
+                    serviceList.clear();
+                    for (BluetoothGattService service:
+                         gattServiceList) {
+                        String serviceUuid = service.getUuid().toString();
+                        serviceList.add(MyGattAttributes.lookup(serviceUuid, "Unknown") + "\n" + serviceUuid);
+                        Log.i(TAG, MyGattAttributes.lookup(serviceUuid, "Unknown") + "\n" + serviceUuid);
 
-            }
-
-            @Override
-            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-
+                        List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
+                        String[] charArra = new String[characteristics.size()];
+                        for (int i = 0; i < characteristics.size(); i++) {
+                            String charUuid = characteristics.get(i).getUuid().toString();
+                            charArra[i] = MyGattAttributes.lookup(charUuid, "Unknown") + "\n" + charUuid;
+                        }
+                        characteristicList.add(charArra);
+                    }
+                    mHandler.sendEmptyMessage(SERVICE_SHOW);
+                }
             }
         });
+//        //Ble扫描回调
+//        mBleService.setOnLeScanListener(new BleService.OnLeScanListener() {
+//            @Override
+//            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
+//
+//            }
+//        });
+//        //Ble连接回调
+//        mBleService.setOnConnectListener(new BleService.OnConnectListener() {
+//            @Override
+//            public void onConnect(BluetoothGatt gatt, int status, int newState) {
+//
+//            }
+//        });
+//        //Ble服务发现回调
+//        mBleService.setOnServicesDiscoveredListener(new BleService.OnServicesDiscoveredListener() {
+//            @Override
+//            public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+//
+//            }
+//        });
+//        //Ble数据回调
+//        mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
+//            @Override
+//            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
+//
+//            }
+//
+//            @Override
+//            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+//
+//            }
+//        });
+    }
+
+    private void doOperation() {
+//        mBleService.initialize();//Ble初始化操作
+//        mBleService.enableBluetooth();//打开或关闭蓝牙
+//        mBleService.scanLeDevice();//启动或停止扫描Ble设备
+//        mBleService.connect();//连接Ble
+//        mBleService.disconnect();//取消连接
+//        mBleService.getSupportedGattServices();//获取服务
+//        mBleService.setCharacteristicNotification();//设置通知
+//        mBleService.readCharacteristic();//读取数据
+//        mBleService.writeCharacteristic();//写入数据
     }
 
     private void doBindService() {
@@ -228,7 +316,10 @@ public class BleScanActivity extends AppCompatActivity {
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {
                 deviceList.get(0).put("isConnect", false);
+                serviceList.clear();
+                characteristicList.clear();
                 deviceAdapter.notifyDataSetChanged();
+                serviceAdapter.notifyDataSetChanged();
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_SCAN_FINISHED)) {
                 btn_scanBle.setEnabled(true);

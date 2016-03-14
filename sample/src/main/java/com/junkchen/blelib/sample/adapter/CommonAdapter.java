@@ -22,7 +22,7 @@ public abstract class CommonAdapter<T> extends BaseAdapter {
     }
 
     /**
-     * �����������ݼ������ݵĸ���
+     * Returns the number of elements in this {@code List}.
      */
     @Override
     public int getCount() {
@@ -30,7 +30,7 @@ public abstract class CommonAdapter<T> extends BaseAdapter {
     }
 
     /**
-     * ��ȡ���ݼ�����ָ��������Ӧ��������
+     * Returns the element at the specified location in this {@code List}.
      */
     @Override
     public T getItem(int position) {
@@ -38,7 +38,7 @@ public abstract class CommonAdapter<T> extends BaseAdapter {
     }
 
     /**
-     * ��ȡָ���ж�Ӧ��Id
+     * Get the row id associated with the specified position in the list.
      */
     @Override
     public long getItemId(int position) {
@@ -46,7 +46,7 @@ public abstract class CommonAdapter<T> extends BaseAdapter {
     }
 
     /**
-     * ��ȡÿһ��Item����ʾ����
+     * Get show view in item.
      */
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {

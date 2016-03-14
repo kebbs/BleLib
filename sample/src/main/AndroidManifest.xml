@@ -16,7 +16,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".BleScanActivity" />
-        <activity android:name=".MultipleBleActivity"></activity>
+        <activity android:name=".MultipleBleActivity" />
+        <activity android:name=".CharacteristicActivity"></activity>
     </application>
 
 </manifest>

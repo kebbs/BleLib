@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Junk Chen
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.junkchen.blelib.sample.adapter;
 
 import android.content.Context;
@@ -13,7 +29,6 @@ import android.widget.TextView;
 /**
  * Custom common ViewHolder class
  *
- * @author JunkChen
  */
 public class ViewHolder {
     private SparseArray<View> mViews;
@@ -23,7 +38,7 @@ public class ViewHolder {
     public ViewHolder(Context context, ViewGroup parent, int layoutId,
                       int position) {
         this.position = position;
-        mViews = new SparseArray<View>();
+        mViews = new SparseArray<>();
         convertView = LayoutInflater.from(context).inflate(layoutId, parent, false);
         convertView.setTag(this);
     }
@@ -40,7 +55,7 @@ public class ViewHolder {
     }
 
     /**
-     * get View by viewID
+     * Get view by viewID
      *
      * @param viewId
      * @return
@@ -63,7 +78,7 @@ public class ViewHolder {
     }
 
     /**
-     * ����TextView��ʾ������
+     * Set show text for TextView.
      *
      * @param viewId
      * @param text
@@ -87,7 +102,7 @@ public class ViewHolder {
     }
 
     /**
-     * ����ImageView��ʾ��ͼƬ
+     * Set image resource for ImageView.
      *
      * @param viewId
      * @param resId
@@ -102,8 +117,6 @@ public class ViewHolder {
     public ViewHolder setImageBitmap(int viewId, Bitmap bm) {
         ImageView iv = getView(viewId);
         iv.setImageBitmap(bm);
-
-
         return this;
     }
 

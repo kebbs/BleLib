@@ -57,7 +57,7 @@ public class MultipleBleService extends Service implements Constants {
     private int connectNum = 0;//Remote device connect number.
     //Stop scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10 * 1000;
-    private static final int MAX_CONNECT_NUM = 16;//Can connect remote device max number.
+    private static final int MAX_CONNECT_NUM = 8;//Can connect remote device max number.
 
     private OnLeScanListener mOnLeScanListener;
     private OnConnectListener mOnConnectListener;
@@ -162,8 +162,10 @@ public class MultipleBleService extends Service implements Constants {
                     isScanning = false;
                     mBluetoothAdapter.stopLeScan(mScanCallback);
                     broadcastUpdate(ACTION_SCAN_FINISHED);
-                    mScanLeDeviceList.clear();
-                    mScanLeDeviceList = null;
+                    if (mScanLeDeviceList != null) {
+                        mScanLeDeviceList.clear();
+                        mScanLeDeviceList = null;
+                    }
 //                    mBluetoothAdapter.getBluetoothLeScanner().stopScan(mLeScanCallback);
                 }
             }, scanPeriod);
@@ -178,8 +180,10 @@ public class MultipleBleService extends Service implements Constants {
             isScanning = false;
             mBluetoothAdapter.stopLeScan(mScanCallback);
             broadcastUpdate(ACTION_SCAN_FINISHED);
-            mScanLeDeviceList.clear();
-            mScanLeDeviceList = null;
+            if (mScanLeDeviceList != null) {
+                mScanLeDeviceList.clear();
+                mScanLeDeviceList = null;
+            }
 //            mBluetoothAdapter.getBluetoothLeScanner().stopScan(mLeScanCallback);
         }
     }
@@ -278,6 +282,7 @@ public class MultipleBleService extends Service implements Constants {
 
     public void close(String address) {
         mConnectedAddressList.remove(address);
+        disconnect(address);
         if (mBluetoothGattMap.get(address) != null) {
             mBluetoothGattMap.get(address).close();
             mBluetoothGattMap.remove(address);
@@ -293,6 +298,7 @@ public class MultipleBleService extends Service implements Constants {
         if (mConnectedAddressList == null) return;
         for (String address :
                 mConnectedAddressList) {
+            disconnect(address);
             if (mBluetoothGattMap.get(address) != null) {
                 mBluetoothGattMap.get(address).close();
             }
@@ -501,6 +507,7 @@ public class MultipleBleService extends Service implements Constants {
                 Log.i(TAG, "Connecting to GATT server.");
                 broadcastUpdate(intentAction, gatt.getDevice().getAddress());
             } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                mConnectedAddressList.add(gatt.getDevice().getAddress());
                 intentAction = ACTION_GATT_CONNECTED;
                 broadcastUpdate(intentAction, gatt.getDevice().getAddress());
                 Log.i(TAG, "Connected to GATT server.");
@@ -508,6 +515,7 @@ public class MultipleBleService extends Service implements Constants {
                 Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGattMap.get(gatt.getDevice().getAddress()).discoverServices());
             } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
+                mConnectedAddressList.remove(gatt.getDevice().getAddress());
                 intentAction = ACTION_GATT_DISCONNECTING;
                 Log.i(TAG, "Disconnecting from GATT server.");
                 broadcastUpdate(intentAction, gatt.getDevice().getAddress());
