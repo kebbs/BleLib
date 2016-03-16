@@ -58,8 +58,8 @@ public class BleScanActivity extends AppCompatActivity {
     public static final int SERVICE_SHOW = 2;
 
     //Member fields
-    private boolean mIsBind;
     private BleService mBleService;
+    private boolean mIsBind;
     private CommonAdapter<Map<String, Object>> deviceAdapter;
     private ArrayAdapter<String> serviceAdapter;
     private List<Map<String, Object>> deviceList;
@@ -211,6 +211,7 @@ public class BleScanActivity extends AppCompatActivity {
     private List<BluetoothGattService> gattServiceList;
     private List<String> serviceList;
     private List<String[]> characteristicList;
+
     private void setBleServiceListener() {
         mBleService.setOnServicesDiscoveredListener(new BleService.OnServicesDiscoveredListener() {
             @Override
@@ -219,8 +220,8 @@ public class BleScanActivity extends AppCompatActivity {
                     gattServiceList = gatt.getServices();
                     characteristicList = new ArrayList<>();
                     serviceList.clear();
-                    for (BluetoothGattService service:
-                         gattServiceList) {
+                    for (BluetoothGattService service :
+                            gattServiceList) {
                         String serviceUuid = service.getUuid().toString();
                         serviceList.add(MyGattAttributes.lookup(serviceUuid, "Unknown") + "\n" + serviceUuid);
                         Log.i(TAG, MyGattAttributes.lookup(serviceUuid, "Unknown") + "\n" + serviceUuid);
@@ -241,14 +242,22 @@ public class BleScanActivity extends AppCompatActivity {
 //        mBleService.setOnLeScanListener(new BleService.OnLeScanListener() {
 //            @Override
 //            public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
-//
+//                //每当扫描到一个Ble设备时就会返回，（扫描结果重复的库中已处理）
 //            }
 //        });
 //        //Ble连接回调
 //        mBleService.setOnConnectListener(new BleService.OnConnectListener() {
 //            @Override
 //            public void onConnect(BluetoothGatt gatt, int status, int newState) {
-//
+//                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+//                    //Ble连接已断开
+//                } else if (newState == BluetoothProfile.STATE_CONNECTING) {
+//                    //Ble正在连接
+//                } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+//                    //Ble已连接
+//                } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
+//                    //Ble正在断开连接
+//                }
 //            }
 //        });
 //        //Ble服务发现回调
@@ -262,12 +271,12 @@ public class BleScanActivity extends AppCompatActivity {
 //        mBleService.setOnDataAvailableListener(new BleService.OnDataAvailableListener() {
 //            @Override
 //            public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
-//
+//                //处理特性读取返回的数据
 //            }
 //
 //            @Override
 //            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
-//
+//                //处理通知返回的数据
 //            }
 //        });
     }
@@ -283,13 +292,20 @@ public class BleScanActivity extends AppCompatActivity {
 //        boolean enabled);//设置通知
 //        mBleService.readCharacteristic(BluetoothGattCharacteristic characteristic);//读取数据
 //        mBleService.writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value);//写入数据
+//        mBleService.close();//关闭客户端
     }
 
+    /**
+     * 绑定服务
+     */
     private void doBindService() {
         Intent serviceIntent = new Intent(this, BleService.class);
         bindService(serviceIntent, serviceConnection, Context.BIND_AUTO_CREATE);
     }
 
+    /**
+     * 解绑服务
+     */
     private void doUnBindService() {
         if (mIsBind) {
             unbindService(serviceConnection);
