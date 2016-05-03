@@ -151,7 +151,7 @@ public class BleService extends Service implements Constants {
      *
      * @return true if the local adapter is turned on
      */
-    public boolean isEnable() {
+    public boolean isEnableBluetooth() {
         return mBluetoothAdapter.isEnabled();
     }
 
@@ -162,6 +162,7 @@ public class BleService extends Service implements Constants {
      * @param scanPeriod scan ble period time
      */
     public void scanLeDevice(final boolean enable, long scanPeriod) {
+        if (isScanning) return;
         if (enable) {
             //Stop scanning after a predefined scan period.
             new Handler().postDelayed(new Runnable() {
@@ -230,6 +231,7 @@ public class BleService extends Service implements Constants {
      */
     public boolean connect(final String address) {
         if (isScanning) scanLeDevice(false);
+        close();
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
             return false;
@@ -448,6 +450,11 @@ public class BleService extends Service implements Constants {
         return mBluetoothGatt.getServices();
     }
 
+    public List<BluetoothDevice> getConnectDevices() {
+        if (mBluetoothManager == null) return null;
+        return mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+    }
+
     /**
      * Device scan callback
      */
@@ -483,18 +490,22 @@ public class BleService extends Service implements Constants {
             String intentAction;
             String address = gatt.getDevice().getAddress();
             if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.i(TAG, "onConnectionStateChange: DISCONNECTED: " + getConnectDevices().size());
                 intentAction = ACTION_GATT_DISCONNECTED;
                 isConnect = false;
                 mConnState = STATE_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
                 broadcastUpdate(intentAction, address);
+                close();
             } else if (newState == BluetoothProfile.STATE_CONNECTING) {
+                Log.i(TAG, "onConnectionStateChange: CONNECTING: " + getConnectDevices().size());
                 isConnect = false;
                 intentAction = ACTION_GATT_CONNECTING;
                 mConnState = STATE_CONNECTING;
                 Log.i(TAG, "Connecting to GATT server.");
                 broadcastUpdate(intentAction, address);
             } else if (newState == BluetoothProfile.STATE_CONNECTED) {
+                Log.i(TAG, "onConnectionStateChange: CONNECTED: " + getConnectDevices().size());
                 intentAction = ACTION_GATT_CONNECTED;
                 isConnect = true;
                 mConnState = STATE_CONNECTED;
@@ -504,6 +515,7 @@ public class BleService extends Service implements Constants {
                 Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGatt.discoverServices());
             } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
+                Log.i(TAG, "onConnectionStateChange: DISCONNECTING: " + getConnectDevices().size());
                 isConnect = false;
                 intentAction = ACTION_GATT_DISCONNECTING;
                 mConnState = STATE_DISCONNECTING;

@@ -12,13 +12,15 @@ BleLib中的关键类：
 
 ##*Usage*
 
+可看博客： [使用BleLib的轻松搞定Android低功耗蓝牙Ble 4.0开发详解](http://blog.csdn.net/kjunchen/article/details/50909410)
+
 ###*引入*
 BleLib库已上传至jcenter、maven central仓库  
 因此，在你项目Module中的build.gradle文件中添加库依赖即可，如下：  
 Gradle:
 
 	dependencies {
-	    compile 'com.junkchen.blelib:blelib:1.0.4'
+	    compile 'com.junkchen.blelib:blelib:1.1.0'
 	}
 
 

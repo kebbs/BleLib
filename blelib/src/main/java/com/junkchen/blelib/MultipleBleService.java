@@ -26,10 +26,13 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.util.Log;
@@ -43,6 +46,7 @@ import java.util.UUID;
 /**
  * Created by JunkChen on 2015/9/11 0009.
  */
+//@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 public class MultipleBleService extends Service implements Constants {
     //Debug
     private static final String TAG = MultipleBleService.class.getName();
@@ -54,10 +58,9 @@ public class MultipleBleService extends Service implements Constants {
     private List<BluetoothDevice> mScanLeDeviceList;
     private boolean isScanning;
     private List<String> mConnectedAddressList;//Already connected remote device address
-    private int connectNum = 0;//Remote device connect number.
     //Stop scanning after 10 seconds.
     private static final long SCAN_PERIOD = 10 * 1000;
-    private static final int MAX_CONNECT_NUM = 8;//Can connect remote device max number.
+    private static final int MAX_CONNECT_NUM = 16;//Can connect remote device max number.
 
     private OnLeScanListener mOnLeScanListener;
     private OnConnectListener mOnConnectListener;
@@ -148,19 +151,34 @@ public class MultipleBleService extends Service implements Constants {
     }
 
     /**
+     * Return true if Bluetooth is currently enabled and ready for use.
+     *
+     * @return true if the local adapter is turned on
+     */
+    public boolean isEnableBluetooth() {
+        return mBluetoothAdapter.isEnabled();
+    }
+
+    /**
      * Scan Ble device.
      *
      * @param enable     If true, start scan ble device.False stop scan.
      * @param scanPeriod scan ble period time
      */
     public void scanLeDevice(final boolean enable, long scanPeriod) {
+        Log.i(TAG, "scanLeDevice: Build.VERSION.SDK_INT = " + Build.VERSION.SDK_INT);
+        if (isScanning) return;
         if (enable) {
             //Stop scanning after a predefined scan period.
             new Handler().postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     isScanning = false;
-                    mBluetoothAdapter.stopLeScan(mScanCallback);
+                    if (Build.VERSION.SDK_INT >= 21) {
+                        mBluetoothAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+                    } else {
+                        mBluetoothAdapter.stopLeScan(mLeScanCallback);
+                    }
                     broadcastUpdate(ACTION_SCAN_FINISHED);
                     if (mScanLeDeviceList != null) {
                         mScanLeDeviceList.clear();
@@ -174,11 +192,19 @@ public class MultipleBleService extends Service implements Constants {
             }
             mScanLeDeviceList.clear();
             isScanning = true;
-            mBluetoothAdapter.startLeScan(mScanCallback);
+            if (Build.VERSION.SDK_INT >= 21) {
+                mBluetoothAdapter.getBluetoothLeScanner().startScan(mScanCallback);
+            } else {
+                mBluetoothAdapter.startLeScan(mLeScanCallback);
+            }
 //            mBluetoothAdapter.getBluetoothLeScanner().startScan(mLeScanCallback);
         } else {
             isScanning = false;
-            mBluetoothAdapter.stopLeScan(mScanCallback);
+            if (Build.VERSION.SDK_INT >= 21) {
+                mBluetoothAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+            } else {
+                mBluetoothAdapter.stopLeScan(mLeScanCallback);
+            }
             broadcastUpdate(ACTION_SCAN_FINISHED);
             if (mScanLeDeviceList != null) {
                 mScanLeDeviceList.clear();
@@ -223,7 +249,8 @@ public class MultipleBleService extends Service implements Constants {
      * is reported asynchronously through the BluetoothGattCallback#onConnectionStateChange.
      */
     public boolean connect(final String address) {
-        if (connectNum > MAX_CONNECT_NUM) return false;
+        if (isScanning) scanLeDevice(false);
+        if (getConnectDevices().size() > MAX_CONNECT_NUM) return false;
         if (mConnectedAddressList == null) {
             mConnectedAddressList = new ArrayList<>();
         }
@@ -256,10 +283,9 @@ public class MultipleBleService extends Service implements Constants {
         // parameter to false.
         BluetoothGatt bluetoothGatt = device.connectGatt(this, false, mGattCallback);
         if (bluetoothGatt != null) {
-            mBluetoothGattMap.put(address, device.connectGatt(this, false, mGattCallback));
+            mBluetoothGattMap.put(address, bluetoothGatt);
             Log.d(TAG, "Trying to create a new connection.");
             mConnectedAddressList.add(address);
-            connectNum++;
             return true;
         }
         return false;
@@ -277,17 +303,36 @@ public class MultipleBleService extends Service implements Constants {
             return;
         }
         mBluetoothGattMap.get(address).disconnect();
-        connectNum--;
     }
 
+    /**
+     * Discovers services offered by a remote device as well as their
+     * characteristics and descriptors.
+     *
+     * Requires {@link android.Manifest.permission#BLUETOOTH} permission.
+     *
+     * @param address Remote device address
+     * @return true, if the remote service discovery has been started
+     */
+    public boolean discoverServices(String address) {
+        if (mBluetoothGattMap.get(address) == null) return false;
+        return mBluetoothGattMap.get(address).discoverServices();
+    }
+
+    /**
+     * After using a given BLE device, the app must call this method to ensure resources are
+     * released properly.
+     *
+     * Close this Bluetooth GATT client.
+     *
+     * @param address You will close Gatt client's address.
+     */
     public void close(String address) {
         mConnectedAddressList.remove(address);
-        disconnect(address);
         if (mBluetoothGattMap.get(address) != null) {
             mBluetoothGattMap.get(address).close();
             mBluetoothGattMap.remove(address);
         }
-        connectNum--;
     }
 
     /**
@@ -298,14 +343,12 @@ public class MultipleBleService extends Service implements Constants {
         if (mConnectedAddressList == null) return;
         for (String address :
                 mConnectedAddressList) {
-            disconnect(address);
             if (mBluetoothGattMap.get(address) != null) {
                 mBluetoothGattMap.get(address).close();
             }
         }
         mBluetoothGattMap.clear();
         mConnectedAddressList.clear();
-        connectNum = 0;
     }
 
     /**
@@ -441,14 +484,18 @@ public class MultipleBleService extends Service implements Constants {
 
     }
 
-//    public BluetoothDevice getConnectDevice() {
-//        if (mBluetoothGatt == null) return null;
-//        return mBluetoothGatt.getDevice();
-//    }
-
     public List<BluetoothDevice> getConnectDevices() {
         if (mBluetoothManager == null) return null;
         return mBluetoothManager.getConnectedDevices(BluetoothProfile.GATT);
+    }
+
+    /**
+     * Get connected number of devices at the present.
+     *
+     * @return Number of devices currently connected
+     */
+    public int getConnectNum() {
+        return getConnectDevices().size();
     }
 
     /**
@@ -466,7 +513,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Device scan callback
      */
-    private final BluetoothAdapter.LeScanCallback mScanCallback = new BluetoothAdapter.LeScanCallback() {
+    private final BluetoothAdapter.LeScanCallback mLeScanCallback = new BluetoothAdapter.LeScanCallback() {
         @Override
         public void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord) {
             Log.i(TAG, "device name: " + device.getName() + ", address: " + device.getAddress());
@@ -480,12 +527,29 @@ public class MultipleBleService extends Service implements Constants {
         }
     };
 
-    /*private final ScanCallback mLeScanCallback = new ScanCallback() {
-        @Override
-        public void onScanResult(int callbackType, ScanResult result) {
-            super.onScanResult(callbackType, result);
+    //@SuppressLint("NewApi")
+    private ScanCallback mScanCallback;
+
+    {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            mScanCallback = new ScanCallback() {
+                @Override
+                public void onScanResult(int callbackType, ScanResult result) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        if (mScanLeDeviceList.contains(result.getDevice())) return;
+                        mScanLeDeviceList.add(result.getDevice());
+                        if (mOnLeScanListener != null) {
+                            mOnLeScanListener.onLeScan(result.getDevice(), result.getRssi(), result.getScanRecord().getBytes());
+                        }
+                        broadcastUpdate(ACTION_BLUETOOTH_DEVICE, result.getDevice());
+                        Log.i(TAG, "onScanResult: name: " + result.getDevice().getName() +
+                                ", address: " + result.getDevice().getAddress() +
+                                ", rssi: " + result.getRssi() + ", scanRecord: " + result.getScanRecord());
+                    }
+                }
+            };
         }
-    };*/
+    }
 
     /**
      * Implements callback methods for GATT events that the app cares about.  For example,
@@ -498,27 +562,29 @@ public class MultipleBleService extends Service implements Constants {
                 mOnConnectListener.onConnect(gatt, status, newState);
             }
             String intentAction;
+            String tmpAddress = gatt.getDevice().getAddress();
             if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 Log.i(TAG, "Disconnected from GATT server.");
-                broadcastUpdate(intentAction, gatt.getDevice().getAddress());
+                broadcastUpdate(intentAction, tmpAddress);
+                close(tmpAddress);
             } else if (newState == BluetoothProfile.STATE_CONNECTING) {
                 intentAction = ACTION_GATT_CONNECTING;
                 Log.i(TAG, "Connecting to GATT server.");
-                broadcastUpdate(intentAction, gatt.getDevice().getAddress());
+                broadcastUpdate(intentAction, tmpAddress);
             } else if (newState == BluetoothProfile.STATE_CONNECTED) {
-                mConnectedAddressList.add(gatt.getDevice().getAddress());
+                mConnectedAddressList.add(tmpAddress);
                 intentAction = ACTION_GATT_CONNECTED;
-                broadcastUpdate(intentAction, gatt.getDevice().getAddress());
+                broadcastUpdate(intentAction, tmpAddress);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGattMap.get(gatt.getDevice().getAddress()).discoverServices());
+                        mBluetoothGattMap.get(tmpAddress).discoverServices());
             } else if (newState == BluetoothProfile.STATE_DISCONNECTING) {
-                mConnectedAddressList.remove(gatt.getDevice().getAddress());
+                mConnectedAddressList.remove(tmpAddress);
                 intentAction = ACTION_GATT_DISCONNECTING;
                 Log.i(TAG, "Disconnecting from GATT server.");
-                broadcastUpdate(intentAction, gatt.getDevice().getAddress());
+                broadcastUpdate(intentAction, tmpAddress);
             }
         }
 

@@ -147,7 +147,7 @@ public class BleScanActivity extends AppCompatActivity {
             public void onClick(View v) {
                 if (!mBleService.isScanning()) {
                     showDialog(getString(R.string.scanning));
-                    mBleService.close();
+//                    mBleService.close();
                     deviceList.clear();
                     mBleService.scanLeDevice(true);
                 }

@@ -103,6 +103,7 @@ public class MultipleBleActivity extends AppCompatActivity {
                     deviceAdapter.notifyDataSetChanged();
                     txtv_connNum.setText(getString(R.string.dev_conn_number) +
                             mBleService.getConnectDevices().size());
+                    Log.i(TAG, "handleMessage: " + mBleService.getConnectDevices().toString());
                     break;
             }
         }
@@ -258,9 +259,11 @@ public class MultipleBleActivity extends AppCompatActivity {
                 deviceList.add(deviceMap);
                 deviceAdapter.notifyDataSetChanged();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_CONNECTED)) {
+                Log.i(TAG, "onReceive: CONNECTED: " + mBleService.getConnectDevices().size());
                 mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_GATT_DISCONNECTED)) {
+                Log.i(TAG, "onReceive: DISCONNECTED: " + mBleService.getConnectDevices().size());
                 mHandler.sendEmptyMessage(CONNECT_CHANGE);
                 dismissDialog();
             } else if (intent.getAction().equals(BleService.ACTION_SCAN_FINISHED)) {
