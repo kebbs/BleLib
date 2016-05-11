@@ -23,7 +23,7 @@
         android:layout_marginLeft="8dp"
         android:layout_toRightOf="@id/imgv_logo"
         android:text="Ble name"
-        android:textSize="18sp" />
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/txtv_address"
@@ -43,7 +43,7 @@
         android:layout_below="@id/txtv_address"
         android:layout_marginTop="4dp"
         android:text="状态: 未连接"
-        android:textSize="14sp" />
+        android:textSize="12sp" />
 
     <Button
         android:id="@+id/btn_connect"

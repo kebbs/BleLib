@@ -16,6 +16,7 @@
 
 package com.junkchen.blelib.sample;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -26,10 +27,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -55,6 +61,7 @@ public class MultipleBleActivity extends AppCompatActivity {
     //Constant
     public static final int SERVICE_BIND = 1;
     public static final int CONNECT_CHANGE = 2;
+    public static final int REQUEST_CODE_ACCESS_COARSE_LOCATION = 1;
 
     //Member fields
     private boolean mIsBind;
@@ -76,8 +83,7 @@ public class MultipleBleActivity extends AppCompatActivity {
             if (mBleService != null) mHandler.sendEmptyMessage(SERVICE_BIND);
             if (mBleService.initialize()) {
                 if (mBleService.enableBluetooth(true)) {
-                    showDialog(getResources().getString(R.string.scanning));
-                    mBleService.scanLeDevice(true);
+                    handleVersionPermission();
                     Toast.makeText(MultipleBleActivity.this, "Bluetooth was opened", Toast.LENGTH_SHORT).show();
                 }
             } else {
@@ -120,8 +126,8 @@ public class MultipleBleActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         doUnBindService();
         unregisterReceiver(bleReceiver);
     }
@@ -135,6 +141,64 @@ public class MultipleBleActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.i(TAG, "onRequestPermissionsResult: p[0] = " + permissions[0] + ", g[0] = " + grantResults[0]);
+        switch (requestCode) {
+            case REQUEST_CODE_ACCESS_COARSE_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    showDialog(getResources().getString(R.string.scanning));
+                    mBleService.scanLeDevice(true);
+                } else {
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(MultipleBleActivity.this, "位置访问权限被拒绝将无法搜索到ble设备", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            }
+            // other 'case' lines to check for other
+            // permissions this app might request
+            default:
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        }
+    }
+
+    private void handleVersionPermission() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            Log.i(TAG, "onCreate: checkSelfPermission");
+
+            int checkSelfPermission = ContextCompat.checkSelfPermission(MultipleBleActivity.this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION);
+            Log.i(TAG, "handleVersionPermission: checkSelfPermission = " + checkSelfPermission);
+            if (checkSelfPermission != PackageManager.PERMISSION_GRANTED) {
+                Log.i(TAG, "onCreate: Android 6.0 动态申请权限");
+
+                boolean showRequestPermissionRationale = ActivityCompat.shouldShowRequestPermissionRationale(MultipleBleActivity.this,
+                        Manifest.permission.ACCESS_COARSE_LOCATION);
+                Log.i(TAG, "handleVersionPermission: showRequestPermissionRationale = " + showRequestPermissionRationale);
+                if (showRequestPermissionRationale) {
+                    Log.i(TAG, "*********onCreate: shouldShowRequestPermissionRationale**********");
+                    Toast.makeText(MultipleBleActivity.this, "只有允许访问位置才能搜索到蓝牙设备", Toast.LENGTH_SHORT).show();
+                }
+                ActivityCompat.requestPermissions(MultipleBleActivity.this,
+                        new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
+                        REQUEST_CODE_ACCESS_COARSE_LOCATION);
+            } else {
+                Log.i(TAG, "handleVersionPermission: scanning...");
+                showDialog(getResources().getString(R.string.scanning));
+                mBleService.scanLeDevice(true);
+            }
+        } else {
+            Log.i(TAG, "handleVersionPermission: scanning...");
+            showDialog(getResources().getString(R.string.scanning));
+            mBleService.scanLeDevice(true);
+        }
+    }
+
     private void initView() {
         btn_scanBle = (Button) findViewById(R.id.btn_scanBle);
         txtv_connNum = (TextView) findViewById(R.id.txtv_connNum);
@@ -146,10 +210,9 @@ public class MultipleBleActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (!mBleService.isScanning()) {
-                    showDialog(getString(R.string.scanning));
                     mBleService.close();
                     deviceList.clear();
-                    mBleService.scanLeDevice(true);
+                    handleVersionPermission();
                 }
             }
         });
@@ -245,7 +308,7 @@ public class MultipleBleActivity extends AppCompatActivity {
         }
     }
 
-    private BroadcastReceiver bleReceiver = new BroadcastReceiver() {
+    protected BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals(BleService.ACTION_BLUETOOTH_DEVICE)) {

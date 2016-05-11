@@ -58,3 +58,8 @@ dependencies {
 apply from: 'install.gradle'
 apply from: 'bintray.gradle'
 //https://oss.sonatype.org/content/repositories/releases/com/junkchen/blelib
+//Android Studio 发布库到jcenter步骤：
+// 1、Gradle->other->install
+// 2、将build/poms/下的 pom-default.xml 文件复制到 build/libs/中，并修改其后缀名为 blelib-1.0.0.pom
+// 3、将build/outputs/aar/下的 blelib-release.aar 文件复制到 build/libs/中，更名如：blelib-1.0.0.aar
+// 4、Gradle->publishing->bintrayUpload
