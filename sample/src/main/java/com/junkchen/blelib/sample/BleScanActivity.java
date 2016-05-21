@@ -303,7 +303,7 @@ public class BleScanActivity extends AppCompatActivity {
 //        //Ble连接回调
 //        mBleService.setOnConnectListener(new BleService.OnConnectListener() {
 //            @Override
-//            public void onConnect(BluetoothGatt gatt, int status, int newState) {
+//            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
 //                if (newState == BluetoothProfile.STATE_DISCONNECTED) {
 //                    //Ble连接已断开
 //                } else if (newState == BluetoothProfile.STATE_CONNECTING) {
@@ -333,7 +333,18 @@ public class BleScanActivity extends AppCompatActivity {
 //            public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
 //                //处理通知返回的数据
 //            }
+//        @Override
+//        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+//
+//        }
 //        });
+
+        mBleService.setOnReadRemoteRssiListener(new BleService.OnReadRemoteRssiListener() {
+            @Override
+            public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+                Log.i(TAG, "onReadRemoteRssi: rssi = " + rssi);
+            }
+        });
     }
 
     private void doOperation() {

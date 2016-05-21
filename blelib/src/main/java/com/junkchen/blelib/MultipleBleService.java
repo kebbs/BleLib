@@ -47,7 +47,7 @@ import java.util.UUID;
  * Created by JunkChen on 2015/9/11 0009.
  */
 //@TargetApi(Build.VERSION_CODES.LOLLIPOP)
-public class MultipleBleService extends Service implements Constants {
+public class MultipleBleService extends Service implements Constants, BleListener {
     //Debug
     private static final String TAG = MultipleBleService.class.getName();
 
@@ -63,9 +63,11 @@ public class MultipleBleService extends Service implements Constants {
     private static final int MAX_CONNECT_NUM = 16;//Can connect remote device max number.
 
     private OnLeScanListener mOnLeScanListener;
-    private OnConnectListener mOnConnectListener;
+    private OnConnectionStateChangeListener mOnConnectionStateChangeListener;
     private OnServicesDiscoveredListener mOnServicesDiscoveredListener;
     private OnDataAvailableListener mOnDataAvailableListener;
+    private OnReadRemoteRssiListener mOnReadRemoteRssiListener;
+    private OnMtuChangedListener mOnMtuChangedListener;
 
     private final IBinder mBinder = new LocalBinder();
     private static MultipleBleService instance = null;
@@ -308,7 +310,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * Discovers services offered by a remote device as well as their
      * characteristics and descriptors.
-     *
+     * <p>
      * Requires {@link android.Manifest.permission#BLUETOOTH} permission.
      *
      * @param address Remote device address
@@ -322,7 +324,7 @@ public class MultipleBleService extends Service implements Constants {
     /**
      * After using a given BLE device, the app must call this method to ensure resources are
      * released properly.
-     *
+     * <p>
      * Close this Bluetooth GATT client.
      *
      * @param address You will close Gatt client's address.
@@ -558,8 +560,8 @@ public class MultipleBleService extends Service implements Constants {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (mOnConnectListener != null) {
-                mOnConnectListener.onConnect(gatt, status, newState);
+            if (mOnConnectionStateChangeListener != null) {
+                mOnConnectionStateChangeListener.onConnectionStateChange(gatt, status, newState);
             }
             String intentAction;
             String tmpAddress = gatt.getDevice().getAddress();
@@ -613,7 +615,6 @@ public class MultipleBleService extends Service implements Constants {
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
-            super.onCharacteristicWrite(gatt, characteristic, status);
             String address = gatt.getDevice().getAddress();
             for (int i = 0; i < characteristic.getValue().length; i++) {
                 Log.i(TAG, "address: " + address + ",Write: " + characteristic.getValue()[i]);
@@ -625,6 +626,27 @@ public class MultipleBleService extends Service implements Constants {
                                             BluetoothGattCharacteristic characteristic) {
             if (mOnDataAvailableListener != null) {
                 mOnDataAvailableListener.onCharacteristicChanged(gatt, characteristic);
+            }
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (mOnDataAvailableListener != null) {
+                mOnDataAvailableListener.onDescriptorRead(gatt, descriptor, status);
+            }
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            if (mOnReadRemoteRssiListener != null) {
+                mOnReadRemoteRssiListener.onReadRemoteRssi(gatt, rssi, status);
+            }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            if (mOnMtuChangedListener != null) {
+                mOnMtuChangedListener.onMtuChanged(gatt, mtu, status);
             }
         }
     };
@@ -647,32 +669,12 @@ public class MultipleBleService extends Service implements Constants {
         sendBroadcast(intent);
     }
 
-    public interface OnLeScanListener {
-        void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord);
-    }
-
-    public interface OnConnectListener {
-        void onConnect(BluetoothGatt gatt, int status, int newState);
-    }
-
-    public interface OnServicesDiscoveredListener {
-        void onServicesDiscovered(BluetoothGatt gatt, int status);
-    }
-
-    public interface OnDataAvailableListener {
-        void onCharacteristicRead(BluetoothGatt gatt,
-                                  BluetoothGattCharacteristic characteristic, int status);
-
-        void onCharacteristicChanged(BluetoothGatt gatt,
-                                     BluetoothGattCharacteristic characteristic);
-    }
-
     public void setOnLeScanListener(OnLeScanListener l) {
         mOnLeScanListener = l;
     }
 
-    public void setOnConnectListener(OnConnectListener l) {
-        mOnConnectListener = l;
+    public void setOnConnectListener(OnConnectionStateChangeListener l) {
+        mOnConnectionStateChangeListener = l;
     }
 
     public void setOnServicesDiscoveredListener(OnServicesDiscoveredListener l) {
@@ -681,5 +683,13 @@ public class MultipleBleService extends Service implements Constants {
 
     public void setOnDataAvailableListener(OnDataAvailableListener l) {
         mOnDataAvailableListener = l;
+    }
+
+    public void serOnReadRemoteRssiListener(OnReadRemoteRssiListener l) {
+        mOnReadRemoteRssiListener = l;
+    }
+
+    public void setOnMtuChangedListener(OnMtuChangedListener l) {
+        mOnMtuChangedListener = l;
     }
 }

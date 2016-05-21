@@ -1,7 +1,7 @@
 apply plugin: 'com.android.library'
 
 ext {
-    libraryVersion = '1.1.0'
+    libraryVersion = '1.2.0'
 
     bintrayRepo = 'maven'
     bintrayName = 'blelib'
@@ -32,8 +32,8 @@ android {
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 23
-        versionCode 2
-        versionName "1.1.0"
+        versionCode 1
+        versionName "1.2.0"
     }
     buildTypes {
         release {

@@ -20,6 +20,7 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
+import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -256,9 +257,9 @@ public class MultipleBleActivity extends AppCompatActivity {
     }
 
     private void setBleServiceListener() {
-        mBleService.setOnConnectListener(new MultipleBleService.OnConnectListener() {
+        mBleService.setOnConnectListener(new MultipleBleService.OnConnectionStateChangeListener() {
             @Override
-            public void onConnect(BluetoothGatt gatt, int status, int newState) {
+            public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
                 if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                     for (int i = 0; i < deviceList.size(); i++) {
                         HashMap<String, Object> devMap = (HashMap<String, Object>) deviceList.get(i);
@@ -290,6 +291,11 @@ public class MultipleBleActivity extends AppCompatActivity {
 
             @Override
             public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
+
+            }
+
+            @Override
+            public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
 
             }
         });

@@ -41,7 +41,7 @@ import java.util.UUID;
 /**
  * Created by JunkChen on 2015/9/11 0009.
  */
-public class BleService extends Service implements Constants {
+public class BleService extends Service implements Constants, BleListener {
     //Debug
     private static final String TAG = BleService.class.getName();
 
@@ -59,9 +59,11 @@ public class BleService extends Service implements Constants {
     private long mScanPeriod;
 
     private OnLeScanListener mOnLeScanListener;
-    private OnConnectListener mOnConnectListener;
+    private OnConnectionStateChangeListener mOnConnectionStateChangeListener;
     private OnServicesDiscoveredListener mOnServicesDiscoveredListener;
     private OnDataAvailableListener mOnDataAvailableListener;
+    private OnReadRemoteRssiListener mOnReadRemoteRssiListener;
+    private OnMtuChangedListener mOnMtuChangedListener;
 
     private final IBinder mBinder = new LocalBinder();
     private static BleService instance = null;
@@ -158,7 +160,7 @@ public class BleService extends Service implements Constants {
     /**
      * Scan Ble device.
      *
-     * @param enable If true, start scan ble device.False stop scan.
+     * @param enable     If true, start scan ble device.False stop scan.
      * @param scanPeriod scan ble period time
      */
     public void scanLeDevice(final boolean enable, long scanPeriod) {
@@ -208,6 +210,7 @@ public class BleService extends Service implements Constants {
 
     /**
      * If Ble is scaning return true, if not return false.
+     *
      * @return ble whether scanning
      */
     public boolean isScanning() {
@@ -216,7 +219,8 @@ public class BleService extends Service implements Constants {
 
     /**
      * Get scan ble devices
-     *@return scan le device list
+     *
+     * @return scan le device list
      */
     public List<BluetoothDevice> getScanLeDevice() {
         return mScanLeDeviceList;
@@ -306,8 +310,8 @@ public class BleService extends Service implements Constants {
      * {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt,
      * android.bluetooth.BluetoothGattCharacteristic, int)} callback.
      *
-     * @param serviceUUID remote device service uuid
-     * @param characteristicUUID  remote device characteristic uuid
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
      */
     public void readCharacteristic(String serviceUUID, String characteristicUUID) {
         if (mBluetoothGatt != null) {
@@ -332,8 +336,8 @@ public class BleService extends Service implements Constants {
     /**
      * Write data to characteristic, and send to remote bluetooth le device.
      *
-     * @param serviceUUID remote device service uuid
-     * @param characteristicUUID  remote device characteristic uuid
+     * @param serviceUUID        remote device service uuid
+     * @param characteristicUUID remote device characteristic uuid
      * @param value              Send to remote ble device data.
      */
     public void writeCharacteristic(String serviceUUID, String characteristicUUID, String value) {
@@ -362,9 +366,9 @@ public class BleService extends Service implements Constants {
     /**
      * Write value to characteristic, and send to remote bluetooth le device.
      *
-     * @param characteristic  remote device characteristic
+     * @param characteristic remote device characteristic
      * @param value          New value for this characteristic
-     *                       @return if write success return true
+     * @return if write success return true
      */
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, String value) {
         return writeCharacteristic(characteristic, value.getBytes());
@@ -375,7 +379,7 @@ public class BleService extends Service implements Constants {
      *
      * @param characteristic remote device characteristic
      * @param value          New value for this characteristic
-     *                       @return if write success return true
+     * @return if write success return true
      */
     public boolean writeCharacteristic(BluetoothGattCharacteristic characteristic, byte[] value) {
         if (mBluetoothGatt != null) {
@@ -484,8 +488,8 @@ public class BleService extends Service implements Constants {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            if (mOnConnectListener != null) {
-                mOnConnectListener.onConnect(gatt, status, newState);
+            if (mOnConnectionStateChangeListener != null) {
+                mOnConnectionStateChangeListener.onConnectionStateChange(gatt, status, newState);
             }
             String intentAction;
             String address = gatt.getDevice().getAddress();
@@ -551,7 +555,7 @@ public class BleService extends Service implements Constants {
             super.onCharacteristicWrite(gatt, characteristic, status);
             String address = gatt.getDevice().getAddress();
             for (int i = 0; i < characteristic.getValue().length; i++) {
-                Log.i(TAG,"address: " + address + ",Write: " + characteristic.getValue()[i]);
+                Log.i(TAG, "address: " + address + ",Write: " + characteristic.getValue()[i]);
             }
         }
 
@@ -560,6 +564,27 @@ public class BleService extends Service implements Constants {
                                             BluetoothGattCharacteristic characteristic) {
             if (mOnDataAvailableListener != null) {
                 mOnDataAvailableListener.onCharacteristicChanged(gatt, characteristic);
+            }
+        }
+
+        @Override
+        public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
+            if (mOnDataAvailableListener != null) {
+                mOnDataAvailableListener.onDescriptorRead(gatt, descriptor, status);
+            }
+        }
+
+        @Override
+        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
+            if (mOnReadRemoteRssiListener != null) {
+                mOnReadRemoteRssiListener.onReadRemoteRssi(gatt, rssi, status);
+            }
+        }
+
+        @Override
+        public void onMtuChanged(BluetoothGatt gatt, int mtu, int status) {
+            if (mOnMtuChangedListener != null) {
+                mOnMtuChangedListener.onMtuChanged(gatt, mtu, status);
             }
         }
     };
@@ -582,32 +607,12 @@ public class BleService extends Service implements Constants {
         sendBroadcast(intent);
     }
 
-    public interface OnLeScanListener {
-        void onLeScan(BluetoothDevice device, int rssi, byte[] scanRecord);
-    }
-
-    public interface OnConnectListener {
-        void onConnect(BluetoothGatt gatt, int status, int newState);
-    }
-
-    public interface OnServicesDiscoveredListener {
-        void onServicesDiscovered(BluetoothGatt gatt, int status);
-    }
-
-    public interface OnDataAvailableListener {
-        void onCharacteristicRead(BluetoothGatt gatt,
-                                  BluetoothGattCharacteristic characteristic, int status);
-
-        void onCharacteristicChanged(BluetoothGatt gatt,
-                                     BluetoothGattCharacteristic characteristic);
-    }
-
     public void setOnLeScanListener(OnLeScanListener l) {
         mOnLeScanListener = l;
     }
 
-    public void setOnConnectListener(OnConnectListener l) {
-        mOnConnectListener = l;
+    public void setOnConnectListener(OnConnectionStateChangeListener l) {
+        mOnConnectionStateChangeListener = l;
     }
 
     public void setOnServicesDiscoveredListener(OnServicesDiscoveredListener l) {
@@ -618,4 +623,11 @@ public class BleService extends Service implements Constants {
         mOnDataAvailableListener = l;
     }
 
+    public void setOnReadRemoteRssiListener(OnReadRemoteRssiListener l) {
+        mOnReadRemoteRssiListener = l;
+    }
+
+    public void setOnMtuChangedListener(OnMtuChangedListener l) {
+        mOnMtuChangedListener = l;
+    }
 }
